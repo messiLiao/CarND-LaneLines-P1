@@ -191,7 +191,7 @@ def setlect_region_test(image):
 	h, w = image.shape[:2]
 	left_bottom = [h-1, 0]
 	right_bottom = [h-1, w-1]
-	apex = [0, w/2]
+	apex = [h/2, w/2]
 	print left_bottom, right_bottom, apex
 
 	# Perform a linear fit (y=Ax+B) to each of the three sides of the triangle
@@ -211,11 +211,27 @@ def setlect_region_test(image):
 
 	region = np.zeros(image.shape, dtype=np.uint8)
 	region[thresholds] = [255,255,255]
+	region = region[:,:,0]
 	mor_kernel = np.ones((3, 3), dtype=np.uint8) * 255
 	mor_kernel[0, 0] = mor_kernel[0, 2] = mor_kernel[2, 0] = mor_kernel[2, 2] = 0
 	region = cv2.dilate(region, mor_kernel)
 
+	rect_image = np.zeros(image.shape, dtype=np.uint8)
 
+	contours, hierarchy = cv2.findContours(np.copy(region), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+	for c in contours:
+		rect = p, s, alpha = cv2.minAreaRect(c)
+		if (min(s) < 3)  or not (10 <= abs(alpha) <= 60) or (min(s) > 40):
+			continue
+		box = cv2.cv.BoxPoints(rect)
+		box = np.int0(box)
+		cv2.drawContours(rect_image, [box], 0, (0, 0, 255), 2)
+		# _x, _y = p
+		# _w, _h = s
+		# # print rect
+		# cv2.rectangle(rect_image, (int(_x), int(_y)), (int(_x+_w), int(_y + _h)), (255,0, 255), 2)
+
+	# cv2.imshow("rect", rect_image)
 	# Define our parameters for Canny and apply
 	low_threshold = 50
 	high_threshold = 150
@@ -226,9 +242,9 @@ def setlect_region_test(image):
 	# Make a blank the same size as our image to draw on
 	rho = 1 # distance resolution in pixels of the Hough annotatedgrid
 	theta = np.pi/180 # angular resolution in radians of the Hough grid
-	threshold = 40     # minimum number of votes (intersections in Hough grid cell)
-	min_line_length = 20 #minimum number of pixels making up a line
-	max_line_gap = 10    # maximum gap in pixels between connectable line segments
+	threshold = 10     # minimum number of votes (intersections in Hough grid cell)
+	min_line_length = 10 #minimum number of pixels making up a line
+	max_line_gap = 80    # maximum gap in pixels between connectable line segments
 	line_image = np.zeros(image.shape, dtype=np.uint8) # creating a blank to draw lines on
 
 	# Run Hough on edge detected image
@@ -244,11 +260,15 @@ def setlect_region_test(image):
 		    	dx = x2 - x1
 		    	if dy**2 + dx**2 < 80:
 		    		continue
-		    	if 10 < abs(np.arctan2(dy, dx)) * 180 / 2 / np.pi < 60:
-		    		cv2.line(line_image,(x1,y1),(x2,y2),(255,0,0),10)
+
+		    	cx = (x1 + x2) / 2
+		    	cy = (y1 + y2) / 2
+		    	if ((cx < w/2) and (-60 < (np.arctan2(dy, dx) * 180.0 / 2 / np.pi) < -10)) or (cx >= w/2) and (10 < (np.arctan2(dy, dx) * 180 / 2 / np.pi) < 60) and region[y1, x1]>0 and region[y2, x2] > 0:
+		    		cv2.line(line_image,(x1,y1),(x2,y2),(255,0,0),2)
 		    	else:
 		    		pass
-
+	cv2.line(line_image,(0,0),(w,h),(255,255,0),1)
+	cv2.line(line_image,(w,0),(0,h),(255,255,0),1)
 	# cv2.imshow("hsv", hsv)
 	cv2.imshow("origin", image)
 	cv2.imshow("lines", line_image)
@@ -273,8 +293,9 @@ def main(args):
 		print image.shape, fn
 		# image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
 		# detect_image(image)
-		setlect_region_test(image)
-		# break
+		skip = setlect_region_test(image)
+		if skip:
+			break
 	video_root = "./test_videos"
 	for index, fn in enumerate(os.listdir(video_root)):
 		# break
