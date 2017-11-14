@@ -137,6 +137,7 @@ def detect_image(image, debug=False):
 	left_lines = []
 	right_lines = []
 	line_image = np.zeros(image.shape[:2], dtype=np.uint8) # creating a blank to draw lines on
+	all_line_image = np.zeros(image.shape[:2], dtype=np.uint8) # creating a blank to draw lines on
 	if lines is not None:
 		for line in lines:
 			for x1,y1,x2,y2 in line:
@@ -156,6 +157,7 @@ def detect_image(image, debug=False):
 					cv2.line(line_image,(x1,y1),(x2,y2),255,1)
 				else:
 					pass
+				cv2.line(all_line_image,(x1,y1),(x2,y2),255,1)
 	
 	if debug:
 		print "\tright lines count:%d, left lines count:%d" % (len(right_lines), len(left_lines))
@@ -209,16 +211,21 @@ def detect_image(image, debug=False):
 		if key in [ord('q'), ord('Q')]:
 			return True, output_image
 		elif key in [ord('s'), ord('S')]:
-			cv2.imwrite('output.jpg', image)
-			cv2.imwrite('output_hsv.jpg', hsv)
-			cv2.imwrite('output_gray.jpg', gray)
+			cv2.imwrite('challenge_107.jpg', image)
+			cv2.imwrite('challenge_107_hsv.jpg', hsv)
+			cv2.imwrite('challenge_107_gray.jpg', gray)
+			cv2.imwrite('challenge_107_region.jpg', region)
+			cv2.imwrite('challenge_107_edges.jpg', edges)
+			cv2.imwrite('challenge_107_lines.jpg', line_image)
+			cv2.imwrite('challenge_107_all_lines.jpg', all_line_image)
+			cv2.imwrite('challenge_107_output.jpg', output_image)
+			cv2.imwrite('challenge_107_region_thresholds.jpg', region_thresholds)
 	pass
 	return False, output_image
 
 def main(args, video_output=False, debug=True):
 	image_root = "./test_images"
 	for fn in os.listdir(image_root):
-
 		fn = os.path.join(image_root, fn)		
 		image = cv2.imread(fn, 1)
 		print "detect image:", fn
