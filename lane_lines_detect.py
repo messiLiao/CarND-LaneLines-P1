@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 import cv2
 import sys
@@ -21,13 +22,12 @@ def save_sample_image_from_video(video_fn):
 			break
 		elif key in [ord('s'), ord('S')]:
 			cv2.imwrite('./test_images/%s_%03d.jpg' % (f, frame_count), image)
-			print key
 		frame_count += 1
 
 	pass
 
 def detect_video(video_fn, output_fn, debug=False):
-	print "detect video:", video_fn 
+	print("detect video: {0}".format(video_fn) )
 	cap = cv2.VideoCapture(video_fn)
 	if output_fn is not None:
 		# get fps and frame_size
@@ -40,7 +40,7 @@ def detect_video(video_fn, output_fn, debug=False):
 	frame_count = 0
 	while True:
 		success, image = cap.read()
-		print "\tframe_index=%d" % frame_count
+		print("\tframe_index={0}".format(frame_count))
 		frame_count += 1
 		if not success:
 			break
@@ -64,7 +64,7 @@ def detect_image(image, debug=False):
 	'''
 	def mouse_callback(event,x,y,flags,param):
 		if(event==cv2.EVENT_LBUTTONDOWN):
-			print "pos:(%3d, %3d), hsv(%s), gray(%s), rgb(%s)" % (y, x, hsv[y, x, :], gray[y,x], image[y, x, :])
+			print("pos:(%3d, %3d), hsv(%s), gray(%s), rgb(%s)" % (y, x, hsv[y, x, :], gray[y,x], image[y, x, :]))
 
 	# let image more smooth
 	kernel_size = 5
@@ -106,7 +106,7 @@ def detect_image(image, debug=False):
 	# add the yello region and write region.
 	thresholds = yellow_thresholds | white_thresholds	
 	if debug:
-		print "\tthresholds.shape:", thresholds.shape
+		print("\tthresholds.shape:{0}".format(thresholds.shape))
 
 	region = np.zeros(image.shape, dtype=np.uint8)
 	region[thresholds] = [255,255,255]
@@ -160,7 +160,7 @@ def detect_image(image, debug=False):
 				cv2.line(all_line_image,(x1,y1),(x2,y2),255,1)
 	
 	if debug:
-		print "\tright lines count:%d, left lines count:%d" % (len(right_lines), len(left_lines))
+		print("\tright lines count:%d, left lines count:%d" % (len(right_lines), len(left_lines)))
 	# creating a blank to draw fit lines on.
 	# there will be more wanted points after draw lines.
 	fit_line_image = np.zeros(image.shape[:2], dtype=np.uint8) 
@@ -171,11 +171,8 @@ def detect_image(image, debug=False):
 	if len(points[0]) < 2:
 		# not enough line to polyfit. create a "outside" line.
 		points = [(-1, -1), (1,2)]
-	try:
-		# the fitted line formular is x = y*a + b
-		right_fit_line= np.polyfit(points[0],points[1],1)
-	except Exception, ex:
-		print ex, points
+	# the fitted line formular is x = y*a + b
+	right_fit_line= np.polyfit(points[0],points[1],1)
 
 	fit_line_image = np.zeros(image.shape[:2], dtype=np.uint8) # creating a blank to draw lines on
 	for x1, y1, x2, y2 in left_lines:
@@ -185,8 +182,8 @@ def detect_image(image, debug=False):
 		points = [(-1, -1), (1,2)]
 	left_fit_line= np.polyfit(points[0], points[1],1)
 	if debug:
-		print "\tright fit line: y = %f x + %f" % (right_fit_line[0], right_fit_line[1])
-		print "\tleft fit line : y = %f x + %f" % (left_fit_line[0], left_fit_line[1])
+		print("\tright fit line: y = %f x + %f" % (right_fit_line[0], right_fit_line[1]))
+		print("\tleft fit line : y = %f x + %f" % (left_fit_line[0], left_fit_line[1]))
 	
 	fit_line_image = np.zeros(image.shape, dtype=np.uint8) # creating a blank to draw lines on
 
@@ -228,7 +225,7 @@ def main(args, video_output=False, debug=True):
 	for fn in os.listdir(image_root):
 		fn = os.path.join(image_root, fn)		
 		image = cv2.imread(fn, 1)
-		print "detect image:", fn
+		print("detect image:{0}".format(fn))
 		skip, _ = detect_image(image, debug)
 		if skip:
 			break
